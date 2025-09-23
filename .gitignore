@@ -2,24 +2,36 @@
 # TELEGRAM CHAT PDF PROCESSOR - GITIGNORE
 # =============================================================================
 
-# Environment variables (contains sensitive data)
+# CRITICAL: Environment variables (contains sensitive user data)
 .env
+.env.*
+!.env.example
 .env.local
 .env.development
 .env.test
 .env.staging
+.env.production
 
-# Input data files (may contain personal information)
+# CRITICAL: Input data files (may contain personal chat data)
 result.json
+telegram_data.json
+export.json
+chat_history.json
 *.json
+!.env.example
 !metadata_summary.json
+!package.json
+!requirements.json
 
-# Output directories
+# CRITICAL: Output directories with processed personal data
 chats_clean_pdf/
 metadata/
 output/
 pdfs/
 exports/
+processed_chats/
+chat_pdfs/
+personal_chats/
 
 # Python
 __pycache__/
@@ -69,13 +81,16 @@ coverage.xml
 cover/
 
 # Virtual environments
-.env
+.venv/
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+python_venv/
+.python-version
+.pyenv
 
 # IDEs and editors
 .vscode/
@@ -85,17 +100,49 @@ venv.bak/
 *~
 .DS_Store
 Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.fleet/
+.code-workspace
+
+# Claude Code settings and cache
+.claude/
+.claude-cache/
+claude-settings.json
+.claude.json
+
+# AI development tools
+.cursor/
+.cursor-settings/
+cursor.json
+.github-copilot/
+.copilot/
+copilot-settings.json
+
+# Other AI assistants and tools
+.aider/
+.continue/
+.codeium/
+.tabnine/
+.kite/
 
 # Logs
 *.log
 logs/
 log/
+debug.log
+error.log
+access.log
+application.log
 
 # Temporary files
 *.tmp
 *.temp
 temp/
 tmp/
+.cache/
+cache/
+.temp/
 
 # OS generated files
 .DS_Store
@@ -105,19 +152,144 @@ tmp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
 # Backup files
 *.bak
 *.backup
 *~
+*.orig
+*.rej
 
-# Personal data and exports (extra protection)
+# CRITICAL: Personal data and exports (extra protection)
 telegram_export/
 my_chats/
 personal_data/
 chat_backups/
+user_data/
+exported_chats/
+telegram_backups/
+my_telegram_data/
 
 # Development artifacts
 test_data/
 sample_data/
-debug_output/ 
+debug_output/
+testing/
+experiments/
+
+# Security and keys
+*.key
+*.pem
+*.crt
+*.p12
+*.keystore
+secrets/
+keys/
+credentials/
+
+# Archive files (may contain sensitive data)
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.tar
+!requirements.txt
+!*.example.zip
+
+# Database files (if any)
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Node.js (if used for any tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# System files
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Large files that shouldn't be in git
+*.bin
+*.exe
+*.dmg
+*.iso
+*.img
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+.lock-wscript
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output
+
+# =============================================================================
+# ADDITIONAL SECURITY PATTERNS
+# =============================================================================
+
+# Any file with 'personal', 'private', 'secret' in name
+*personal*
+*private*
+*secret*
+*confidential*
+
+# Potential backup or alternate data files
+*.json.bak
+*.json.backup
+telegram_*.json
+chat_*.json
+export_*.json
+backup_*.json
+
+# User-specific folders that might be created
+*/personal/
+*/private/
+*/secrets/
+*/my_data/
+
+# Large files (GitHub has 100MB limit)
+*.json
+!package.json
+!metadata_summary.json
+!.env.example
+
+# =============================================================================
+# FINAL WARNING COMMENT
+# =============================================================================
+#
+# ⚠️  IMPORTANT SECURITY NOTICE:
+# This .gitignore file protects against accidental commits of:
+# - Personal chat data (result.json, *.json)
+# - Environment configurations (.env files)
+# - Generated PDFs (chats_clean_pdf/)
+# - Processing metadata (metadata/)
+# - IDE settings (.idea/, .vscode/, .claude/)
+# - AI assistant configurations and caches
+# - System files and caches
+#
+# Always verify with 'git status' before committing!
+# Never commit files containing personal information!
+#
+# ============================================================================= 

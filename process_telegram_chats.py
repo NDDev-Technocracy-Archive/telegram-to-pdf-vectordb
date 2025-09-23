@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -12,15 +13,31 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
 import platform
 
+# Set UTF-8 encoding for Windows console
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+# Safe print function for Windows console
+def safe_print(message):
+    """Print function that handles Unicode issues on Windows"""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        # Fallback: remove emoji and special characters
+        safe_message = message.encode('ascii', errors='ignore').decode('ascii')
+        print(safe_message)
+
 # Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    print("✅ Environment variables loaded from .env file")
+    safe_print("✅ Environment variables loaded from .env file")
 except ImportError:
-    print("⚠️  python-dotenv not installed, using system environment variables only")
+    safe_print("⚠️  python-dotenv not installed, using system environment variables only")
 except Exception as e:
-    print(f"⚠️  Could not load .env file: {e}")
+    safe_print(f"⚠️  Could not load .env file: {e}")
 
 # Configuration from environment variables with defaults
 class Config:
@@ -205,22 +222,22 @@ def setup_fonts():
                     pdfmetrics.registerFont(TTFont('CyrillicFont', font_path))
                     font_registered = True
                     if Config.SHOW_FONT_INFO:
-                        print(f"Using font: {font_path}")
+                        safe_print(f"Using font: {font_path}")
                     break
                 except Exception as e:
                     if Config.VERBOSE_LOGGING:
-                        print(f"Failed to load font {font_path}: {e}")
+                        safe_print(f"Failed to load font {font_path}: {e}")
                     continue
         
         if not font_registered:
             if Config.SHOW_FONT_INFO:
-                print(f"Warning: No suitable font found for Cyrillic, using {Config.DEFAULT_FONT}")
+                safe_print(f"Warning: No suitable font found for Cyrillic, using {Config.DEFAULT_FONT}")
             return Config.DEFAULT_FONT
         
         return 'CyrillicFont'
     except Exception as e:
         if Config.VERBOSE_LOGGING:
-            print(f"Font setup error: {e}")
+            safe_print(f"Font setup error: {e}")
         return Config.DEFAULT_FONT
 
 def extract_person_info(chat_name, messages):
@@ -282,31 +299,50 @@ def create_optimized_pdf_parts(chat_name, messages, output_dir=None, max_size_kb
     
     # Group messages into chunks with better memory efficiency
     all_chunks = []
-    
+    last_displayed_date = None
+
     for i in range(0, len(messages), chunk_size):
         chunk = messages[i:i+chunk_size]
         chunk_texts = []
-        
+
         for idx, msg in enumerate(chunk):
             text = msg.get('text', '').strip()
             direction = msg.get('direction', '?')
-            # Calculate global message number in chat
-            global_msg_num = i + idx + 1
-            
+            date_str = msg.get('date', '')
+
             if text:
                 # Text cleaning with configurable length limit
                 text = re.sub(r'\s+', ' ', text)
                 text = text[:Config.MAX_MESSAGE_LENGTH]
-                
-                # Add chronological numbering to message format
+
+                # Parse and format date/time
+                timestamp_prefix = ""
+                if date_str:
+                    try:
+                        # Parse ISO format datetime: "2025-09-02T20:53:47"
+                        dt = datetime.fromisoformat(date_str)
+                        current_date = dt.strftime("%d.%m.%Y")
+                        current_time = dt.strftime("%H:%M")
+
+                        # Show full date only once per day, then just time
+                        if last_displayed_date != current_date:
+                            timestamp_prefix = f"[{current_date}] "
+                            last_displayed_date = current_date
+                        else:
+                            timestamp_prefix = f"[{current_time}] "
+                    except Exception as e:
+                        # Fallback to empty prefix if date parsing fails
+                        timestamp_prefix = ""
+
+                # Add date/time prefix to message format - corrected logic
                 if direction == '>':
-                    chunk_texts.append(f"[{global_msg_num}/{total_messages}] Me: {text}")
+                    chunk_texts.append(f"{timestamp_prefix}Me: {text}")
                 else:
-                    chunk_texts.append(f"[{global_msg_num}/{total_messages}] From {person_name}: {text}")
-        
+                    chunk_texts.append(f"{timestamp_prefix}{person_name}: {text}")
+
         if chunk_texts:
-            # Join with separator optimized for vector search
-            combined_text = " | ".join(chunk_texts)
+            # Join with newlines for better LLM processing (removed pipe separators)
+            combined_text = "\n".join(chunk_texts)
             all_chunks.append(combined_text)
     
     # Memory-efficient file creation
@@ -397,7 +433,7 @@ def create_single_pdf_file(chat_name, chunks, output_dir, person_info, total_mes
         return True, len(chunks)
     except Exception as e:
         if Config.VERBOSE_LOGGING:
-            print(f"Error creating PDF for {chat_name}: {e}")
+            safe_print(f"Error creating PDF for {chat_name}: {e}")
         return False, 0
 
 def process_telegram_chats_optimized(input_file=None):
@@ -406,35 +442,35 @@ def process_telegram_chats_optimized(input_file=None):
     if input_file is None:
         input_file = Config.INPUT_FILE
     
-    print(f"Creating optimized PDFs for n8n processing (max {Config.MAX_FILE_SIZE_KB}KB per file)...")
+    safe_print(f"Creating optimized PDFs for n8n processing (max {Config.MAX_FILE_SIZE_KB}KB per file)...")
     
     # Load chat data with better error handling
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except FileNotFoundError:
-        print(f"❌ Error: {input_file} not found!")
+        safe_print(f"❌ Error: {input_file} not found!")
         return False
     except json.JSONDecodeError as e:
-        print(f"❌ Error: Invalid JSON in {input_file}: {e}")
+        safe_print(f"❌ Error: Invalid JSON in {input_file}: {e}")
         return False
     except Exception as e:
-        print(f"❌ Error loading {input_file}: {e}")
+        safe_print(f"❌ Error loading {input_file}: {e}")
         return False
     
     chat_list = data.get('chats', {}).get('list', [])
     if not chat_list:
-        print("❌ No chats found in the data!")
+        safe_print("❌ No chats found in the data!")
         return False
-    
-    print(f"📂 Found {len(chat_list)} chats to process")
+
+    safe_print(f"📂 Found {len(chat_list)} chats to process")
     
     # Create output directories
     try:
         os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
         os.makedirs(Config.METADATA_DIR, exist_ok=True)
     except Exception as e:
-        print(f"❌ Error creating directories: {e}")
+        safe_print(f"❌ Error creating directories: {e}")
         return False
     
     # Processing counters
@@ -458,12 +494,12 @@ def process_telegram_chats_optimized(input_file=None):
         
         if not messages:
             if Config.SHOW_PROGRESS:
-                print(f"⚠️  Skipping {chat_name}: No messages found")
+                safe_print(f"⚠️  Skipping {chat_name}: No messages found")
             skipped_count += 1
             continue
         
         if Config.SHOW_PROGRESS:
-            print(f"🔄 Processing [{idx}/{len(chat_list)}]: {chat_name} ({len(messages)} messages)")
+            safe_print(f"🔄 Processing [{idx}/{len(chat_list)}]: {chat_name} ({len(messages)} messages)")
         
         chat_messages = []
         
@@ -484,16 +520,17 @@ def process_telegram_chats_optimized(input_file=None):
             is_from_me = (sender and Config.USER_NAME in sender) or sender_id == Config.USER_ID
             direction = '>' if is_from_me else '<'
             
-            # Store essential data with direction
+            # Store essential data with direction and date
             chat_msg = {
                 'text': text_content,
-                'direction': direction
+                'direction': direction,
+                'date': msg.get('date', '')
             }
             chat_messages.append(chat_msg)
         
         if not chat_messages:
             if Config.SHOW_PROGRESS:
-                print(f"⚠️  Skipping {chat_name}: No valid messages after processing")
+                safe_print(f"⚠️  Skipping {chat_name}: No valid messages after processing")
             skipped_count += 1
             continue
         
@@ -501,7 +538,7 @@ def process_telegram_chats_optimized(input_file=None):
         try:
             files_created = create_optimized_pdf_parts(chat_name, chat_messages)
         except Exception as e:
-            print(f"❌ Error processing {chat_name}: {e}")
+            safe_print(f"❌ Error processing {chat_name}: {e}")
             skipped_count += 1
             continue
         
@@ -538,7 +575,7 @@ def process_telegram_chats_optimized(input_file=None):
                             part_info = f" [Part {part_match.group(1)}/{part_match.group(2)}]"
                     
                     if Config.SHOW_PROGRESS:
-                        print(f"   ✅ {filename}: {chunk_count} chunks ({file_size:.1f} KB){part_info}")
+                        safe_print(f"   ✅ {filename}: {chunk_count} chunks ({file_size:.1f} KB){part_info}")
                     
                     # Add to summary for n8n
                     summary_data.append({
@@ -557,18 +594,18 @@ def process_telegram_chats_optimized(input_file=None):
                     })
                 else:
                     if Config.SHOW_PROGRESS:
-                        print(f"   ❌ {filename}: Failed to create PDF")
+                        safe_print(f"   ❌ {filename}: Failed to create PDF")
             
             # Summary for this chat
             if Config.SHOW_PROGRESS:
                 if len(files_created) > 1:
                     total_size = sum(os.path.getsize(os.path.join(Config.OUTPUT_DIR, f[0])) / 1024 
                                    for f in files_created if f[1] and os.path.exists(os.path.join(Config.OUTPUT_DIR, f[0])))
-                    print(f"   📊 Total: {len(chat_messages)} messages (Me:{sent_count}, From {person_info['person_name']}:{received_count}) → {len(files_created)} files ({total_size:.1f} KB)")
+                    safe_print(f"   📊 Total: {len(chat_messages)} messages (Me:{sent_count}, From {person_info['person_name']}:{received_count}) → {len(files_created)} files ({total_size:.1f} KB)")
                 else:
-                    print(f"   📊 Total: {len(chat_messages)} messages (Me:{sent_count}, From {person_info['person_name']}:{received_count})")
+                    safe_print(f"   📊 Total: {len(chat_messages)} messages (Me:{sent_count}, From {person_info['person_name']}:{received_count})")
         else:
-            print(f"❌ {chat_name}: Failed to create any PDF files")
+            safe_print(f"❌ {chat_name}: Failed to create any PDF files")
             skipped_count += 1
     
     # Save summary for n8n workflow
@@ -576,46 +613,46 @@ def process_telegram_chats_optimized(input_file=None):
         metadata_path = os.path.join(Config.METADATA_DIR, Config.METADATA_FILE)
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(summary_data, f, ensure_ascii=False, indent=2)
-        print(f"📋 Metadata saved: {Config.METADATA_DIR}/{Config.METADATA_FILE}")
+        safe_print(f"📋 Metadata saved: {Config.METADATA_DIR}/{Config.METADATA_FILE}")
     except Exception as e:
-        print(f"⚠️  Warning: Could not save metadata: {e}")
+        safe_print(f"⚠️  Warning: Could not save metadata: {e}")
     
     # Final summary
-    print(f"\n🎯 Processing completed successfully!")
-    print(f"📁 Output location: {Config.OUTPUT_DIR}/ directory")
-    print(f"📊 Results:")
-    print(f"   ✅ Processed: {processed_count} chats")
-    print(f"   ⚠️  Skipped: {skipped_count} chats")
-    print(f"   📄 Created: {total_files} PDF files")
-    print(f"   💬 Total messages: {total_messages}")
-    print(f"   📦 Total chunks: {total_chunks}")
+    safe_print(f"\n🎯 Processing completed successfully!")
+    safe_print(f"📁 Output location: {Config.OUTPUT_DIR}/ directory")
+    safe_print(f"📊 Results:")
+    safe_print(f"   ✅ Processed: {processed_count} chats")
+    safe_print(f"   ⚠️  Skipped: {skipped_count} chats")
+    safe_print(f"   📄 Created: {total_files} PDF files")
+    safe_print(f"   💬 Total messages: {total_messages}")
+    safe_print(f"   📦 Total chunks: {total_chunks}")
     
     if processed_count > 0:
         avg_messages_per_chat = total_messages / processed_count
         avg_chunks_per_file = total_chunks / total_files if total_files > 0 else 0
-        print(f"   📈 Average: {avg_messages_per_chat:.1f} messages/chat, {avg_chunks_per_file:.1f} chunks/file")
+        safe_print(f"   📈 Average: {avg_messages_per_chat:.1f} messages/chat, {avg_chunks_per_file:.1f} chunks/file")
     
-    print(f"\n💡 Optimizations applied:")
-    print(f"   ✅ Dynamic chunk sizing based on message length")
-    print(f"   ✅ Memory-efficient processing")
-    print(f"   ✅ Optimized file size management (max {Config.MAX_FILE_SIZE_KB}KB)")
-    print(f"   ✅ Clean message format for n8n processing")
-    print(f"   ✅ Enhanced error handling and progress tracking")
-    print(f"   ✅ Emoji conversion and text normalization")
+    safe_print(f"\n💡 Optimizations applied:")
+    safe_print(f"   ✅ Dynamic chunk sizing based on message length")
+    safe_print(f"   ✅ Memory-efficient processing")
+    safe_print(f"   ✅ Optimized file size management (max {Config.MAX_FILE_SIZE_KB}KB)")
+    safe_print(f"   ✅ Clean message format for n8n processing")
+    safe_print(f"   ✅ Enhanced error handling and progress tracking")
+    safe_print(f"   ✅ Emoji conversion and text normalization")
     
-    print(f"\n🔧 n8n Integration Tips:")
-    print(f"   1. Text Splitter settings: chunk_size=800, overlap=200")
-    print(f"   2. Process files in batches of 5-8 for optimal memory usage")
-    print(f"   3. Search patterns: 'Me:', 'From [NAME]:', person names")
-    print(f"   4. Use {Config.METADATA_DIR}/{Config.METADATA_FILE} for person identification")
-    print(f"   5. Vector dimensions: 1536 (OpenAI) or 768 (local models)")
-    print(f"   6. Recommended embedding model: text-embedding-ada-002")
-    print(f"   7. PDF text extraction: use 'pdf-parse' node before text splitter")
+    safe_print(f"\n🔧 n8n Integration Tips:")
+    safe_print(f"   1. Text Splitter settings: chunk_size=800, overlap=200")
+    safe_print(f"   2. Process files in batches of 5-8 for optimal memory usage")
+    safe_print(f"   3. Search patterns: 'Me:', 'From [NAME]:', person names")
+    safe_print(f"   4. Use {Config.METADATA_DIR}/{Config.METADATA_FILE} for person identification")
+    safe_print(f"   5. Vector dimensions: 1536 (OpenAI) or 768 (local models)")
+    safe_print(f"   6. Recommended embedding model: text-embedding-ada-002")
+    safe_print(f"   7. PDF text extraction: use 'pdf-parse' node before text splitter")
     
     # Show multipart files info
     large_chats = [item for item in summary_data if item['is_multipart']]
     if large_chats:
-        print(f"\n⚠️  Large chats (split into multiple files):")
+        safe_print(f"\n⚠️  Large chats (split into multiple files):")
         multipart_chats = {}
         for item in large_chats:
             chat = item['original_chat']
@@ -624,9 +661,9 @@ def process_telegram_chats_optimized(input_file=None):
             multipart_chats[chat] += 1
         
         for chat, file_count in multipart_chats.items():
-            print(f"   📂 {chat}: {file_count} parts")
+            safe_print(f"   📂 {chat}: {file_count} parts")
     else:
-        print(f"\n✅ All chats fit in single files (optimal for processing)")
+        safe_print(f"\n✅ All chats fit in single files (optimal for processing)")
     
     return True
 
@@ -636,22 +673,22 @@ if __name__ == "__main__":
     
     # Process chats with configuration settings
     if Config.VERBOSE_LOGGING:
-        print(f"🔧 Configuration loaded:")
-        print(f"   Input file: {Config.INPUT_FILE}")
-        print(f"   Output directory: {Config.OUTPUT_DIR}")
-        print(f"   Max file size: {Config.MAX_FILE_SIZE_KB}KB")
-        print(f"   User: {Config.USER_NAME} (ID: {Config.USER_ID})")
-        print(f"   Font: {Config.DEFAULT_FONT}")
-        print()
+        safe_print(f"🔧 Configuration loaded:")
+        safe_print(f"   Input file: {Config.INPUT_FILE}")
+        safe_print(f"   Output directory: {Config.OUTPUT_DIR}")
+        safe_print(f"   Max file size: {Config.MAX_FILE_SIZE_KB}KB")
+        safe_print(f"   User: {Config.USER_NAME} (ID: {Config.USER_ID})")
+        safe_print(f"   Font: {Config.DEFAULT_FONT}")
+        safe_print("")
     
     # Run the main processing function
     success = process_telegram_chats_optimized()
     
     if not success:
-        print("\n❌ Processing failed!")
+        safe_print("\n❌ Processing failed!")
         exit(1)
     else:
-        print("\n✅ All done! Ready for n8n processing.")
+        safe_print("\n✅ All done! Ready for n8n processing.")
         if Config.VERBOSE_LOGGING:
-            print(f"📁 Check {Config.OUTPUT_DIR}/ directory for generated PDFs")
-            print(f"📋 Check {Config.METADATA_DIR}/{Config.METADATA_FILE} for processing metadata") 
+            safe_print(f"📁 Check {Config.OUTPUT_DIR}/ directory for generated PDFs")
+            safe_print(f"📋 Check {Config.METADATA_DIR}/{Config.METADATA_FILE} for processing metadata") 

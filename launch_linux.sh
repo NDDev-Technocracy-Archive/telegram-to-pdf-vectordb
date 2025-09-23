@@ -74,11 +74,36 @@ else
 fi
 
 echo ""
-echo -e "${BLUE}🚀 Starting Telegram Chat PDF Processor...${NC}"
+echo -e "${BLUE}🔍 Checking for result.json...${NC}"
+if [ ! -f "result.json" ]; then
+    echo -e "${RED}❌ result.json not found!${NC}"
+    echo "Please place your Telegram export file as 'result.json' in this directory"
+    echo ""
+    echo "How to export:"
+    echo "1. Open Telegram Desktop"
+    echo "2. Settings → Advanced → Export Telegram data"
+    echo "3. Select 'Personal chats' and 'Machine-readable JSON'"
+    echo "4. Save as 'result.json' in this folder"
+    echo ""
+    exit 1
+fi
+
+echo -e "${GREEN}✅ result.json found${NC}"
+echo ""
+
+# Create output directories
+mkdir -p chats_clean_pdf
+mkdir -p metadata
+
+echo -e "${BLUE}🚀 Starting processing...${NC}"
 echo ""
 
 $PYTHON_CMD process_telegram_chats.py
 
 echo ""
 echo -e "${GREEN}🎯 Processing completed!${NC}"
+echo ""
+echo -e "${BLUE}📁 Check these folders:${NC}"
+echo "   - chats_clean_pdf/     (PDF files)"
+echo "   - metadata/            (processing info)"
 echo "" 
