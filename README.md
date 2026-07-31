@@ -1,5 +1,9 @@
 # Telegram Chat PDF Processor
 
+> **DEPRECATED.** This repository is archived and no longer maintained.
+> It is kept read-only for reference; its GDS anchor records
+> `lifecycle: archived` under `portfolio:archived-projects`.
+
 Convert your Telegram chat exports to optimized PDF files ready for AI processing and vector databases.
 
 ## 🚀 Quick Start (Windows)

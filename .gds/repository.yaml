@@ -1,0 +1,37 @@
+schema_version: 1
+repository:
+  id: "repo_01KYVPAK4V029RGYSADG2RJ3XS"
+  display_name: "telegram-to-pdf-vectordb"
+  roles:
+    - "project"
+  lifecycle: "archived"
+provider:
+  type: "github"
+  installation: "installation:github-personal"
+  repository_id: 1006659534
+  owner: "rldyourmnd"
+  name: "telegram-to-pdf-vectordb"
+classification:
+  portfolios:
+    - "portfolio:archived-projects"
+  visibility_contract: "public"
+  data_classification: "public"
+policy:
+  profiles:
+    - "repository-default"
+    - "personal-default"
+  rollout_ring: "standard"
+git:
+  default_branch: "main"
+  integration: "pull-request"
+  branch_model: "task-branches"
+  handoff_pr: "never"
+  cleanup: "manual"
+agent:
+  context_profile: "project-default"
+  generated_agents: false
+  serena:
+    enabled: false
+    provenance_required: false
+release:
+  mode: "none"
