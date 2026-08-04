@@ -1,0 +1,73 @@
+name: security
+
+# Full public-OSS security suite for rldyourmnd/telegram-to-pdf-vectordb.
+# Public repo -> GitHub Actions minutes (ubuntu-latest) + free code scanning.
+# Triggers: pull_request + workflow_dispatch ONLY (no push: cross-owner reusable).
+# Reusable workflows are pinned to an immutable ci-workflows SHA.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: CodeQL
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: NDDev-it-com/ci-workflows/.github/workflows/public-codeql.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+    with:
+      languages: '["python","actions"]'
+
+  scorecard:
+    name: OSSF Scorecard
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    uses: NDDev-it-com/ci-workflows/.github/workflows/public-scorecard.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: NDDev-it-com/ci-workflows/.github/workflows/public-dependency-review.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+    with:
+      fail_on_severity: moderate
+
+  zizmor:
+    name: zizmor (SARIF)
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: NDDev-it-com/ci-workflows/.github/workflows/zizmor-sarif.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+
+  secret-scan:
+    name: Gitleaks secret scan
+    permissions:
+      contents: read
+    uses: NDDev-it-com/ci-workflows/.github/workflows/secret-scan.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+
+  actionlint:
+    name: actionlint
+    permissions:
+      contents: read
+    uses: NDDev-it-com/ci-workflows/.github/workflows/actionlint.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+
+  semgrep:
+    name: semgrep
+    permissions:
+      contents: read
+    uses: NDDev-it-com/ci-workflows/.github/workflows/semgrep-ci.yml@ca538d59aef41c1bb03c3669366c368128d5af88

@@ -1,0 +1,26 @@
+name: ci
+
+# CI for rldyourmnd/telegram-to-pdf-vectordb (public OSS, Python).
+# Triggers: pull_request + workflow_dispatch ONLY (no push: cross-owner reusable).
+# Reusable workflows are pinned to an immutable ci-workflows SHA.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: python (3.12)
+    permissions:
+      contents: read
+    uses: NDDev-it-com/ci-workflows/.github/workflows/python-ci.yml@ca538d59aef41c1bb03c3669366c368128d5af88
+    with:
+      python_version: '3.12'
+      install_command: 'uv pip install --system -r requirements.txt'
+      test_command: 'ruff check .'
