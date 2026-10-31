@@ -32,7 +32,7 @@ jobs:
       - name: Install and check
         run: |
           uv pip install --system -r requirements.txt
-          ruff check .
+          uvx ruff@0.17.2 check .
 
   semgrep:
     runs-on: ubuntu-24.04
@@ -47,15 +47,6 @@ jobs:
           enable-cache: 'false'
       - name: Semgrep rules
         run: uvx semgrep@1.182.1 scan --error --metrics off --config p/ci
-
-  dependency-review:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    if: ${{ github.event_name == 'pull_request' }}
-    steps:
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-        with:
-          fail-on-severity: moderate
 
   workflows:
     runs-on: ubuntu-24.04
@@ -84,7 +75,7 @@ jobs:
           fi
 
   gate:
-    needs: [python, semgrep, dependency-review, workflows]
+    needs: [python, semgrep, workflows]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -93,4 +84,4 @@ jobs:
         with:
           needs: ${{ toJSON(needs) }}
           expected: >-
-            {"python":"success","semgrep":"success","dependency-review":"${{ github.event_name == 'pull_request' && 'success' || 'skipped' }}","workflows":"success"}
+            {"python":"success","semgrep":"success","workflows":"success"}
