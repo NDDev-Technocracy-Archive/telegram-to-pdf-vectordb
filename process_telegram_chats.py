@@ -1,17 +1,15 @@
 import json
 import os
+import platform
 import re
 import sys
 from datetime import datetime
+
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.fonts import addMapping
-import platform
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 # Set UTF-8 encoding for Windows console
 if sys.platform.startswith('win'):
@@ -110,7 +108,7 @@ def convert_emojis_to_text(text):
         '🥺': '[pleading]', '😢': '[cry]', '😭': '[sob]', '😤': '[huff]', '😠': '[angry]',
         '😡': '[rage]', '🤬': '[swearing]', '🤯': '[exploding_head]', '😳': '[flushed]', '🥵': '[hot]',
         '🥶': '[cold]', '😱': '[scream]', '😨': '[fearful]', '😰': '[anxious]', '😥': '[disappointed_relieved]',
-        '😓': '[cold_sweat]', '🤗': '[hugs]', '🤔': '[thinking]', '🤫': '[shushing]', '🤭': '[hand_over_mouth]',
+        '😓': '[cold_sweat]',
         '🙈': '[see_no_evil]', '🙉': '[hear_no_evil]', '🙊': '[speak_no_evil]', '💀': '[skull]', '☠️': '[skull_crossbones]',
         '👻': '[ghost]', '👽': '[alien]', '🤖': '[robot]', '💩': '[poop]', '😺': '[smiley_cat]',
         '😸': '[smile_cat]', '😹': '[joy_cat]', '😻': '[heart_eyes_cat]', '😼': '[smirk_cat]', '😽': '[kissing_cat]',
@@ -330,7 +328,7 @@ def create_optimized_pdf_parts(chat_name, messages, output_dir=None, max_size_kb
                             last_displayed_date = current_date
                         else:
                             timestamp_prefix = f"[{current_time}] "
-                    except Exception as e:
+                    except Exception:
                         # Fallback to empty prefix if date parsing fails
                         timestamp_prefix = ""
 
@@ -563,7 +561,7 @@ def process_telegram_chats_optimized(input_file=None):
                     try:
                         pdf_path = os.path.join(Config.OUTPUT_DIR, filename)
                         file_size = os.path.getsize(pdf_path) / 1024
-                    except:
+                    except OSError:
                         file_size = 0
                     
                     # Determine if this is a multi-part file
@@ -618,9 +616,9 @@ def process_telegram_chats_optimized(input_file=None):
         safe_print(f"⚠️  Warning: Could not save metadata: {e}")
     
     # Final summary
-    safe_print(f"\n🎯 Processing completed successfully!")
+    safe_print("\n🎯 Processing completed successfully!")
     safe_print(f"📁 Output location: {Config.OUTPUT_DIR}/ directory")
-    safe_print(f"📊 Results:")
+    safe_print("📊 Results:")
     safe_print(f"   ✅ Processed: {processed_count} chats")
     safe_print(f"   ⚠️  Skipped: {skipped_count} chats")
     safe_print(f"   📄 Created: {total_files} PDF files")
@@ -632,27 +630,27 @@ def process_telegram_chats_optimized(input_file=None):
         avg_chunks_per_file = total_chunks / total_files if total_files > 0 else 0
         safe_print(f"   📈 Average: {avg_messages_per_chat:.1f} messages/chat, {avg_chunks_per_file:.1f} chunks/file")
     
-    safe_print(f"\n💡 Optimizations applied:")
-    safe_print(f"   ✅ Dynamic chunk sizing based on message length")
-    safe_print(f"   ✅ Memory-efficient processing")
+    safe_print("\n💡 Optimizations applied:")
+    safe_print("   ✅ Dynamic chunk sizing based on message length")
+    safe_print("   ✅ Memory-efficient processing")
     safe_print(f"   ✅ Optimized file size management (max {Config.MAX_FILE_SIZE_KB}KB)")
-    safe_print(f"   ✅ Clean message format for n8n processing")
-    safe_print(f"   ✅ Enhanced error handling and progress tracking")
-    safe_print(f"   ✅ Emoji conversion and text normalization")
+    safe_print("   ✅ Clean message format for n8n processing")
+    safe_print("   ✅ Enhanced error handling and progress tracking")
+    safe_print("   ✅ Emoji conversion and text normalization")
     
-    safe_print(f"\n🔧 n8n Integration Tips:")
-    safe_print(f"   1. Text Splitter settings: chunk_size=800, overlap=200")
-    safe_print(f"   2. Process files in batches of 5-8 for optimal memory usage")
-    safe_print(f"   3. Search patterns: 'Me:', 'From [NAME]:', person names")
+    safe_print("\n🔧 n8n Integration Tips:")
+    safe_print("   1. Text Splitter settings: chunk_size=800, overlap=200")
+    safe_print("   2. Process files in batches of 5-8 for optimal memory usage")
+    safe_print("   3. Search patterns: 'Me:', 'From [NAME]:', person names")
     safe_print(f"   4. Use {Config.METADATA_DIR}/{Config.METADATA_FILE} for person identification")
-    safe_print(f"   5. Vector dimensions: 1536 (OpenAI) or 768 (local models)")
-    safe_print(f"   6. Recommended embedding model: text-embedding-ada-002")
-    safe_print(f"   7. PDF text extraction: use 'pdf-parse' node before text splitter")
+    safe_print("   5. Vector dimensions: 1536 (OpenAI) or 768 (local models)")
+    safe_print("   6. Recommended embedding model: text-embedding-ada-002")
+    safe_print("   7. PDF text extraction: use 'pdf-parse' node before text splitter")
     
     # Show multipart files info
     large_chats = [item for item in summary_data if item['is_multipart']]
     if large_chats:
-        safe_print(f"\n⚠️  Large chats (split into multiple files):")
+        safe_print("\n⚠️  Large chats (split into multiple files):")
         multipart_chats = {}
         for item in large_chats:
             chat = item['original_chat']
@@ -663,7 +661,7 @@ def process_telegram_chats_optimized(input_file=None):
         for chat, file_count in multipart_chats.items():
             safe_print(f"   📂 {chat}: {file_count} parts")
     else:
-        safe_print(f"\n✅ All chats fit in single files (optimal for processing)")
+        safe_print("\n✅ All chats fit in single files (optimal for processing)")
     
     return True
 
@@ -673,7 +671,7 @@ if __name__ == "__main__":
     
     # Process chats with configuration settings
     if Config.VERBOSE_LOGGING:
-        safe_print(f"🔧 Configuration loaded:")
+        safe_print("🔧 Configuration loaded:")
         safe_print(f"   Input file: {Config.INPUT_FILE}")
         safe_print(f"   Output directory: {Config.OUTPUT_DIR}")
         safe_print(f"   Max file size: {Config.MAX_FILE_SIZE_KB}KB")
@@ -686,7 +684,7 @@ if __name__ == "__main__":
     
     if not success:
         safe_print("\n❌ Processing failed!")
-        exit(1)
+        sys.exit(1)
     else:
         safe_print("\n✅ All done! Ready for n8n processing.")
         if Config.VERBOSE_LOGGING:
