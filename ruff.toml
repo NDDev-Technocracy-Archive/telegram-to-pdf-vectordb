@@ -1,0 +1,4 @@
+# Archived hackathon code: the batch loops deliberately keep processing after any per-chat
+# failure, so catching Exception (BLE001) and silent skips (S110) are intended here.
+[lint]
+extend-ignore = ["BLE001", "S110"]
