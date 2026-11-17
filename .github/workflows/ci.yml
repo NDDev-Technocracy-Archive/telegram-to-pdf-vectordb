@@ -27,7 +27,7 @@ jobs:
       # Keep the original interpreter channel until its ordinary coherent proposal qualifies.
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version-file: .python-version
+          python-version-file: .github/.python-version
       - name: Preserve the actual tooling and application-requirement installation gates
         id: dependencies
         run: just setup

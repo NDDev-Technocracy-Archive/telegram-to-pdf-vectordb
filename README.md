@@ -207,6 +207,6 @@ On an execution host, `just setup` also qualifies the existing application
 requirements in a disposable CI environment; it imports no processor and produces
 no PDF. `just scan` retains the mandatory remote-rule security check with metrics
 off. `just verify` covers those existing gates; no formal behavior suite is declared.
-CI uses the original Python channel through `.python-version` and the original
+CI uses the original Python channel through `.github/.python-version` and the original
 Ruff/Semgrep selections through `.github/ci-requirements.txt`. The product launchers
 and installers remain its user entry points.

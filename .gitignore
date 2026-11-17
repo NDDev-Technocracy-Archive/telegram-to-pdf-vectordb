@@ -295,6 +295,6 @@ backup_*.json
 # =============================================================================
 
 # Declared CI metadata and its disposable installation fixture.
-!/.python-version
+!/.github/.python-version
 !/.github/ci-tools.json
 .venv-ci-install/
