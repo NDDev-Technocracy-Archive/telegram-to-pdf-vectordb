@@ -36,7 +36,7 @@ fix:
 # Preserves actual requirement installation in a disposable CI environment, without running the app.
 [group('qualification')]
 install-check:
-    uv venv --clear .venv-ci-install
+    uv venv --python "$(command -v python)" --clear .venv-ci-install
     uv pip install --python .venv-ci-install/bin/python -r requirements.txt
 
 # Preserves mandatory remote-rule Semgrep scanning with its exact existing version and metrics off.
