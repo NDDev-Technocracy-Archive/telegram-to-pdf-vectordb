@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "repository": "rhysd/actionlint",
+      "asset": 384924896,
+      "tag": "v1.7.12",
+      "name": "actionlint_1.7.12_linux_amd64.tar.gz",
+      "file": "actionlint_1.7.12_linux_amd64.tar.gz",
+      "size": 2353908,
+      "sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
+      "members": [
+        {
+          "path": "actionlint",
+          "file": "actionlint",
+          "size": 6074530,
+          "sha256": "c872d6db8c6bf83a8eaa704fc93999f027d55dffbc63b8a6abdccb47df5f4cd4",
+          "executable": true
+        }
+      ]
+    },
+    {
+      "repository": "gitleaks/gitleaks",
+      "asset": 378332058,
+      "tag": "v8.30.1",
+      "name": "gitleaks_8.30.1_linux_x64.tar.gz",
+      "file": "gitleaks_8.30.1_linux_x64.tar.gz",
+      "size": 8230402,
+      "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+      "members": [
+        {
+          "path": "gitleaks",
+          "file": "gitleaks",
+          "size": 21958840,
+          "sha256": "88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509",
+          "executable": true
+        }
+      ]
+    }
+  ]
+}

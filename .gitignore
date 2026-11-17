@@ -292,4 +292,9 @@ backup_*.json
 # Always verify with 'git status' before committing!
 # Never commit files containing personal information!
 #
-# ============================================================================= 
+# =============================================================================
+
+# Declared CI metadata and its disposable installation fixture.
+!/.github/.python-version
+!/.github/ci-tools.json
+.venv-ci-install/
